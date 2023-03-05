@@ -14,6 +14,5 @@ public class UserAndRolesDto {
 
     private Integer userId;
     private String username;
-    private UserTypeEnum userType;
     private List<RolesEnum> userRoles;
 }

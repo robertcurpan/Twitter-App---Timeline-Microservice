@@ -4,6 +4,7 @@ package com.twitterapp.timelinemicroservice.controller;
 import com.twitterapp.extrastructures.RolesEnum;
 import com.twitterapp.timelinemicroservice.dto.UserAndRolesDto;
 import com.twitterapp.timelinemicroservice.entity.Tweet;
+import com.twitterapp.timelinemicroservice.entity.UserInfo;
 import com.twitterapp.timelinemicroservice.exception.exceptions.AccessForbiddenException;
 import com.twitterapp.timelinemicroservice.exception.exceptions.AuthorizationHeaderMissingException;
 import com.twitterapp.timelinemicroservice.exception.exceptions.GenericException;
@@ -21,6 +22,7 @@ import java.util.Objects;
 
 @RestController
 @RequestMapping("/api/timeline")
+@CrossOrigin("http://localhost:3000")
 public class TimelineController {
 
     @Autowired
@@ -51,7 +53,18 @@ public class TimelineController {
             throw new AccessForbiddenException();
         }
 
-        List<Tweet> homeTimeline = timelineService.getHomeTimeline(jws, userId, userAndRolesDto.getUserType(), pageNumber, pageSize);
+        List<Tweet> homeTimeline = timelineService.getHomeTimeline(jws, userId, pageNumber, pageSize);
         return new ResponseEntity<>(homeTimeline, HttpStatus.OK);
+    }
+
+    @PutMapping("/{userId}")
+    public ResponseEntity<String> addUserInfo(@PathVariable Integer userId) {
+        timelineService.addUserInfo(userId);
+        return new ResponseEntity<>("", HttpStatus.OK);
+    }
+
+    @GetMapping("/{userId}")
+    public ResponseEntity<UserInfo> getUserInfo(@PathVariable Integer userId) {
+        return new ResponseEntity<>(timelineService.getUserInfo(userId), HttpStatus.OK);
     }
 }
