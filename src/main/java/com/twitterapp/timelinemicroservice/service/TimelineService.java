@@ -55,10 +55,11 @@ public class TimelineService {
 
     }
 
-    public List<Tweet> getHomeTimeline(String jws, Integer userId, Integer pageNumber, Integer pageSize) throws PassiveUserCanOnlyRetrieveTheFirstPageOfTimelineException, GenericException {
+    public List<Tweet> getHomeTimeline(String jws, Integer userId, LocalDateTime timestamp, String lastDocumentSeenId, Integer pageNumber, Integer pageSize) throws PassiveUserCanOnlyRetrieveTheFirstPageOfTimelineException, GenericException {
         UserTypeEnum userType = redisUsersInfoRepository.getUserInfo(userId).getUserType();
+        Date timestampDate = DateTimeUtil.convertLocalDateTimeToDate(timestamp);
         if(userType == UserTypeEnum.ACTIVE || userType == UserTypeEnum.LIVE) {
-            return getHomeTimelineForActiveOrLiveUser(jws, userId, userType, pageNumber, pageSize);
+            return getHomeTimelineForActiveOrLiveUser(jws, userId, userType, timestampDate, lastDocumentSeenId, pageNumber, pageSize);
         } else if (userType == UserTypeEnum.PASSIVE) {
             return getHomeTimelineForPassiveUser(jws, userId, pageNumber, pageSize);
         }
@@ -66,20 +67,16 @@ public class TimelineService {
         return new ArrayList<>();
     }
 
-    public List<Tweet> getHomeTimelineForActiveOrLiveUser(String jws, Integer userId, UserTypeEnum userType, Integer pageNumber, Integer pageSize) throws GenericException {
+    public List<Tweet> getHomeTimelineForActiveOrLiveUser(String jws, Integer userId, UserTypeEnum userType, Date timestampDate, String lastDocumentSeenId, Integer pageNumber, Integer pageSize) throws GenericException {
         try {
-            List<Tweet> tweetsPageFromCache = getTweetsPageFromCacheForHomeTimeline(jws, userId, pageNumber, pageSize);
-            lastTweetSeen = tweetsPageFromCache.get(tweetsPageFromCache.size() - 1);
-            return tweetsPageFromCache;
+            return getTweetsPageFromCacheForHomeTimeline(jws, userId, pageNumber, pageSize);
         } catch (HttpClientErrorException exception) {
             HttpStatus statusCode = exception.getStatusCode();
             if(statusCode == HttpStatus.NOT_FOUND) {
                 try {
-                    List<Tweet> bulkOfTweetsFromDatabase = getBulkOfTweetsFromDatabaseForHomeTimeline(jws, userId);
+                    List<Tweet> bulkOfTweetsFromDatabase = getBulkOfTweetsFromDatabaseForHomeTimeline(jws, userId, timestampDate, lastDocumentSeenId);
                     addTweetsToCacheReadListForUser(jws, userId, bulkOfTweetsFromDatabase);
-                    List<Tweet> tweetsPageFromCache = getTweetsPageFromCacheForHomeTimeline(jws, userId, pageNumber, pageSize);
-                    lastTweetSeen = tweetsPageFromCache.get(tweetsPageFromCache.size() - 1);
-                    return tweetsPageFromCache;
+                    return getTweetsPageFromCacheForHomeTimeline(jws, userId, pageNumber, pageSize);
                 } catch (HttpClientErrorException newException) {
                     String exceptionMessage = newException.getResponseBodyAsString();
                     throw new GenericException(exceptionMessage);
@@ -100,9 +97,7 @@ public class TimelineService {
         try {
             List<Tweet> firstBulkOfTweetsFromDatabase = getFirstBulkOfTweetsFromDatabaseForHomeTimeline(jws, userId);
             addTweetsToCacheWriteListForUser(jws, userId, firstBulkOfTweetsFromDatabase);
-            List<Tweet> tweetsPageFromCache = getTweetsPageFromCacheForHomeTimeline(jws, userId, 0, pageSize);
-            lastTweetSeen = tweetsPageFromCache.get(tweetsPageFromCache.size() - 1);
-            return tweetsPageFromCache;
+            return getTweetsPageFromCacheForHomeTimeline(jws, userId, 0, pageSize);
         } catch (HttpClientErrorException exception) {
             String exceptionMessage = exception.getResponseBodyAsString();
             throw new GenericException(exceptionMessage);
@@ -126,15 +121,15 @@ public class TimelineService {
         return tweetsForHomeTimeline;
     }
 
-    public List<Tweet> getBulkOfTweetsFromDatabaseForHomeTimeline(String jws, Integer userId) {
+    public List<Tweet> getBulkOfTweetsFromDatabaseForHomeTimeline(String jws, Integer userId, Date timestampDate, String lastTweetSeenId) {
         String url = "http://localhost:8083/api/tweets/" + userId.toString() + "/forHomeTimeline?timestamp={timestamp}&lastDocumentSeenId={lastDocumentSeenId}";
         HttpHeaders headers = new HttpHeaders();
         headers.add("Authorization", "Bearer " + jws);
         HttpEntity<String> entity = new HttpEntity<>(headers);
 
-        Date dateTimestamp = lastTweetSeen.getTimestamp() == null ? new Date() : lastTweetSeen.getTimestamp();
+        String lastDocumentSeenId = Objects.equals(lastTweetSeenId, "0") ? "" : lastTweetSeenId;
+        Date dateTimestamp = Objects.equals(lastTweetSeenId, "0") ? new Date() : timestampDate;
         LocalDateTime timestamp = DateTimeUtil.convertDateToLocalDateTime(dateTimestamp);
-        String lastDocumentSeenId = lastTweetSeen.getTweetId() == null ? "" : lastTweetSeen.getTweetId();
 
         Map<String, Object> requestParameters = new HashMap<>();
         requestParameters.put("timestamp", timestamp);

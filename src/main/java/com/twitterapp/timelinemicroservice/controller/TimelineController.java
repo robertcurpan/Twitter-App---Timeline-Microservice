@@ -12,11 +12,13 @@ import com.twitterapp.timelinemicroservice.exception.exceptions.PassiveUserCanOn
 import com.twitterapp.timelinemicroservice.service.TimelineService;
 import com.twitterapp.timelinemicroservice.util.AuthorizationUtil;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import javax.servlet.http.HttpServletRequest;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Objects;
 
@@ -46,14 +48,15 @@ public class TimelineController {
 
     @GetMapping("/{userId}/homeTimeline")
     public ResponseEntity<List<Tweet>> getHomeTimeline(HttpServletRequest request, @PathVariable Integer userId,
-                                       @RequestParam Integer pageNumber, @RequestParam Integer pageSize) throws AuthorizationHeaderMissingException, GenericException, AccessForbiddenException, PassiveUserCanOnlyRetrieveTheFirstPageOfTimelineException {
+                                                       @RequestParam Integer pageNumber, @RequestParam Integer pageSize,
+                                                       @RequestParam @DateTimeFormat(pattern = "yyyy-MM-dd'T'HH:mm:ss.SSS") LocalDateTime timestamp, @RequestParam String lastDocumentSeenId) throws AuthorizationHeaderMissingException, GenericException, AccessForbiddenException, PassiveUserCanOnlyRetrieveTheFirstPageOfTimelineException {
         String jws = authorizationUtil.getJwsFromRequest(request);
         UserAndRolesDto userAndRolesDto = authorizationUtil.validateJws(jws);
         if(!(authorizationUtil.checkRoleAuthorization(userAndRolesDto.getUserRoles(), RolesEnum.READER) && Objects.equals(userAndRolesDto.getUserId(), userId))) {
             throw new AccessForbiddenException();
         }
 
-        List<Tweet> homeTimeline = timelineService.getHomeTimeline(jws, userId, pageNumber, pageSize);
+        List<Tweet> homeTimeline = timelineService.getHomeTimeline(jws, userId, timestamp, lastDocumentSeenId, pageNumber, pageSize);
         return new ResponseEntity<>(homeTimeline, HttpStatus.OK);
     }
 
