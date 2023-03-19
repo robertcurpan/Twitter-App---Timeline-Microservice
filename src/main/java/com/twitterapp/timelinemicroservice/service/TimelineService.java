@@ -6,6 +6,7 @@ import com.twitterapp.timelinemicroservice.entity.Tweet;
 import com.twitterapp.timelinemicroservice.entity.UserInfo;
 import com.twitterapp.timelinemicroservice.exception.exceptions.GenericException;
 import com.twitterapp.timelinemicroservice.exception.exceptions.PassiveUserCanOnlyRetrieveTheFirstPageOfTimelineException;
+import com.twitterapp.timelinemicroservice.repository.RedisTweetsRepository;
 import com.twitterapp.timelinemicroservice.repository.RedisUsersInfoRepository;
 import com.twitterapp.timelinemicroservice.util.DateTimeUtil;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -21,13 +22,12 @@ import java.util.*;
 @Service
 public class TimelineService {
 
-    private Tweet lastTweetSeen = new Tweet();
-
     @Autowired
     private RestTemplate restTemplate;
-
     @Autowired
     private RedisUsersInfoRepository redisUsersInfoRepository;
+    @Autowired
+    private RedisTweetsRepository redisTweetsRepository;
 
 
     public List<Tweet> getUserTimeline(String jws, Integer userId, Integer pageNumber, Integer pageSize) throws GenericException {
@@ -56,8 +56,13 @@ public class TimelineService {
     }
 
     public List<Tweet> getHomeTimeline(String jws, Integer userId, LocalDateTime timestamp, String lastDocumentSeenId, Integer pageNumber, Integer pageSize) throws PassiveUserCanOnlyRetrieveTheFirstPageOfTimelineException, GenericException {
-        UserTypeEnum userType = redisUsersInfoRepository.getUserInfo(userId).getUserType();
         Date timestampDate = DateTimeUtil.convertLocalDateTimeToDate(timestamp);
+        UserTypeEnum userType = redisUsersInfoRepository.getUserInfo(userId).getUserType();
+        if(userType == null) {
+            redisUsersInfoRepository.updateUserType(userId, UserTypeEnum.PASSIVE);
+            userType = UserTypeEnum.PASSIVE;
+        }
+
         if(userType == UserTypeEnum.ACTIVE || userType == UserTypeEnum.LIVE) {
             return getHomeTimelineForActiveOrLiveUser(jws, userId, userType, timestampDate, lastDocumentSeenId, pageNumber, pageSize);
         } else if (userType == UserTypeEnum.PASSIVE) {
@@ -84,7 +89,7 @@ public class TimelineService {
             }
         } finally {
             if(userType == UserTypeEnum.ACTIVE) {
-                changeUserType(jws, userId, UserTypeEnum.LIVE);
+                changeUserType(userId, UserTypeEnum.LIVE);
             }
         }
 
@@ -102,7 +107,7 @@ public class TimelineService {
             String exceptionMessage = exception.getResponseBodyAsString();
             throw new GenericException(exceptionMessage);
         } finally {
-            changeUserType(jws, userId, UserTypeEnum.LIVE);
+            changeUserType(userId, UserTypeEnum.LIVE);
         }
     }
 
@@ -117,7 +122,20 @@ public class TimelineService {
         requestParameters.put("pageSize", pageSize);
 
         ResponseEntity<List<Tweet>> response = restTemplate.exchange(url, HttpMethod.GET, entity, new ParameterizedTypeReference<List<Tweet>>(){}, requestParameters);
-        List<Tweet> tweetsForHomeTimeline = response.getBody();
+        List<Tweet> listOfTweets = response.getBody();
+        List<Tweet> tweetsForHomeTimeline = new ArrayList<>();
+
+        if(listOfTweets != null) {
+            for(Tweet tweet : listOfTweets) {
+                if(!redisTweetsRepository.isTweetDeleted(tweet.getTweetId())) {
+                    if(redisTweetsRepository.isTweetEdited(tweet.getTweetId())) {
+                        tweet.setText(redisTweetsRepository.getNewTextForEditedTweet(tweet.getTweetId()));
+                    }
+                    tweetsForHomeTimeline.add(tweet);
+                }
+            }
+        }
+
         return tweetsForHomeTimeline;
     }
 
@@ -186,26 +204,13 @@ public class TimelineService {
         }
     }
 
-    private void changeUserType(String jws, Integer userId, UserTypeEnum newUserType) throws GenericException {
+    private void changeUserType(Integer userId, UserTypeEnum newUserType) throws GenericException {
         try {
-            //TODO - Salvat userType in DB
-            changeUserTypeInDatabase(jws, userId, newUserType);
             redisUsersInfoRepository.updateUserType(userId, newUserType);
         } catch (HttpClientErrorException exception) {
             String exceptionMessage = exception.getResponseBodyAsString();
             throw new GenericException(exceptionMessage);
         }
-    }
-
-    private void changeUserTypeInDatabase(String jws, Integer userId, UserTypeEnum newUserType) {
-        String url = "http://localhost:8081/api/users/" + userId.toString();
-        HttpHeaders headers = new HttpHeaders();
-        headers.add("Authorization", "Bearer " + jws);
-        Map<String, UserTypeEnum> requestBody = new HashMap<>();
-        requestBody.put("userType", newUserType);
-        HttpEntity<Map<String, UserTypeEnum>> entity = new HttpEntity<>(requestBody, headers);
-
-        restTemplate.exchange(url, HttpMethod.PATCH, entity, String.class);
     }
 
     public void addUserInfo(Integer userId) {
