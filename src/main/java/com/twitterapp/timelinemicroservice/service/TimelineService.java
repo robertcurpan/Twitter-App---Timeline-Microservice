@@ -1,11 +1,11 @@
 package com.twitterapp.timelinemicroservice.service;
 
 
-import com.twitterapp.extrastructures.UserTypeEnum;
 import com.twitterapp.timelinemicroservice.entity.Tweet;
 import com.twitterapp.timelinemicroservice.entity.UserInfo;
 import com.twitterapp.timelinemicroservice.exception.exceptions.GenericException;
 import com.twitterapp.timelinemicroservice.exception.exceptions.PassiveUserCanOnlyRetrieveTheFirstPageOfTimelineException;
+import com.twitterapp.timelinemicroservice.extrastructures.UserTypeEnum;
 import com.twitterapp.timelinemicroservice.repository.RedisTweetsRepository;
 import com.twitterapp.timelinemicroservice.repository.RedisUsersInfoRepository;
 import com.twitterapp.timelinemicroservice.util.DateTimeUtil;

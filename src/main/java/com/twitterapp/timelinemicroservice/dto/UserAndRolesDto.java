@@ -1,7 +1,6 @@
 package com.twitterapp.timelinemicroservice.dto;
 
-import com.twitterapp.extrastructures.RolesEnum;
-import com.twitterapp.extrastructures.UserTypeEnum;
+import com.twitterapp.timelinemicroservice.extrastructures.RolesEnum;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;

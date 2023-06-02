@@ -1,6 +1,6 @@
 package com.twitterapp.timelinemicroservice.entity;
 
-import com.twitterapp.extrastructures.UserTypeEnum;
+import com.twitterapp.timelinemicroservice.extrastructures.UserTypeEnum;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;

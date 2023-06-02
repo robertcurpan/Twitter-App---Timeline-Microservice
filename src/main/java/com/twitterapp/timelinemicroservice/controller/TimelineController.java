@@ -1,7 +1,6 @@
 package com.twitterapp.timelinemicroservice.controller;
 
 
-import com.twitterapp.extrastructures.RolesEnum;
 import com.twitterapp.timelinemicroservice.dto.UserAndRolesDto;
 import com.twitterapp.timelinemicroservice.entity.Tweet;
 import com.twitterapp.timelinemicroservice.entity.UserInfo;
@@ -9,6 +8,7 @@ import com.twitterapp.timelinemicroservice.exception.exceptions.AccessForbiddenE
 import com.twitterapp.timelinemicroservice.exception.exceptions.AuthorizationHeaderMissingException;
 import com.twitterapp.timelinemicroservice.exception.exceptions.GenericException;
 import com.twitterapp.timelinemicroservice.exception.exceptions.PassiveUserCanOnlyRetrieveTheFirstPageOfTimelineException;
+import com.twitterapp.timelinemicroservice.extrastructures.RolesEnum;
 import com.twitterapp.timelinemicroservice.service.TimelineService;
 import com.twitterapp.timelinemicroservice.util.AuthorizationUtil;
 import org.springframework.beans.factory.annotation.Autowired;

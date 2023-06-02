@@ -1,8 +1,8 @@
 package com.twitterapp.timelinemicroservice.repository;
 
 
-import com.twitterapp.extrastructures.UserTypeEnum;
 import com.twitterapp.timelinemicroservice.entity.UserInfo;
+import com.twitterapp.timelinemicroservice.extrastructures.UserTypeEnum;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.redis.core.HashOperations;
 import org.springframework.stereotype.Repository;

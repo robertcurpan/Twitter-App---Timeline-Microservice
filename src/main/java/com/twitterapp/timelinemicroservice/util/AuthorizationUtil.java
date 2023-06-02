@@ -1,10 +1,10 @@
 package com.twitterapp.timelinemicroservice.util;
 
-import com.twitterapp.extrastructures.JwsObject;
-import com.twitterapp.extrastructures.RolesEnum;
 import com.twitterapp.timelinemicroservice.dto.UserAndRolesDto;
 import com.twitterapp.timelinemicroservice.exception.exceptions.AuthorizationHeaderMissingException;
 import com.twitterapp.timelinemicroservice.exception.exceptions.GenericException;
+import com.twitterapp.timelinemicroservice.extrastructures.JwsObject;
+import com.twitterapp.timelinemicroservice.extrastructures.RolesEnum;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpMethod;
