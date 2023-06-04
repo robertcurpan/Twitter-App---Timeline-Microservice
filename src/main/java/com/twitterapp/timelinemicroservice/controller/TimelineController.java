@@ -24,7 +24,7 @@ import java.util.Objects;
 
 @RestController
 @RequestMapping("/api/timeline")
-@CrossOrigin("http://localhost:80")
+@CrossOrigin(value = {"http://34.245.12.59"})
 public class TimelineController {
 
     @Autowired
