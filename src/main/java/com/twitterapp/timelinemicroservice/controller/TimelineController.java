@@ -24,7 +24,7 @@ import java.util.Objects;
 
 @RestController
 @RequestMapping("/api/timeline")
-@CrossOrigin(value = {"http://54.246.43.171", "http://54.246.43.171:8082", "http://54.246.43.171:8083", "http://54.246.43.171:8084", "http://54.246.43.171:8085", "http://54.246.43.171:8086", "http://localhost:8082", "http://localhost:8083", "http://localhost:8084", "http://localhost:8085", "http://localhost:8086"})
+@CrossOrigin(value = {"http://54.246.43.171"})
 public class TimelineController {
 
     @Autowired
