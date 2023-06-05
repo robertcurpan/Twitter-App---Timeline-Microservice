@@ -32,7 +32,7 @@ public class AuthorizationUtil {
 
     public UserAndRolesDto validateJws(String jws) throws GenericException {
         JwsObject jwsObject = new JwsObject(jws);
-        String url = "http://3.250.72.230:8081/api/auth/validateJws";
+        String url = "http://54.246.43.171:8081/api/auth/validateJws";
         HttpEntity<JwsObject> entity = new HttpEntity<>(jwsObject);
 
         try {
